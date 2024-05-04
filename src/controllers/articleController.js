@@ -11,6 +11,7 @@ export const create = async (req, res) => {
     });
     res.json(article);
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "Не удалось создать статью",
     });
@@ -18,16 +19,24 @@ export const create = async (req, res) => {
 };
 
 export const getAll = async (req, res) => {
+  let { userId } = req.query;
+  let articles;
   try {
-    const articles = await Article.findAll({
-      include: [
-        {
-          model: User,
-          attributes: ["userId", "firstName", "lastName"],
-        },
-      ],
-      order: [["createdAt", "DESC"]],
-    });
+    if (userId) {
+      articles = await Article.findAll({
+        where: { userId: userId },
+      });
+    } else {
+      articles = await Article.findAll({
+        include: [
+          {
+            model: User,
+            attributes: ["userId", "firstName", "lastName"],
+          },
+        ],
+        order: [["createdAt", "ASC"]],
+      });
+    }
     res.json(articles);
   } catch (error) {
     console.log(error);

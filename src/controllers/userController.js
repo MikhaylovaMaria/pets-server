@@ -2,9 +2,10 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
 import models from "../models/models.js";
-const { User } = models;
-import dotenv from "dotenv";
+const { User, Subscription } = models;
+import { Op } from "sequelize";
 dotenv.config();
+import dotenv from "dotenv";
 
 export const register = async (req, res) => {
   try {
@@ -94,7 +95,14 @@ export const login = async (req, res) => {
 };
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findByPk(req.userId);
+    let user;
+    const { id } = req.params;
+
+    if (id) {
+      user = await User.findByPk(id);
+    } else {
+      user = await User.findByPk(req.userId);
+    }
     if (!user) {
       return res.status(404).json({ message: "Пользователь не найден " });
     }
@@ -105,4 +113,114 @@ export const getMe = async (req, res) => {
   }
 };
 
-// Получение всех пользователей по городу....
+export const getUser = async (req, res) => {
+  try {
+    let userData;
+    const userId = req.params.id;
+    if (userId) {
+      userData = await User.findByPk(userId);
+    } else {
+      return res.status(500).json("НЕТ ID В запроса");
+    }
+    if (!userData) {
+      return res.status(404).json({ message: "ПОЛЬЗОВАТЕЛЯ НЕТ" });
+    }
+    const { passwordHash, ...user } = userData.dataValues;
+    res.json(user);
+  } catch (error) {
+    res.status(500).json("ОШИБКА ПОЛУЧЕНИЯ ПОЛЬЗОВАТЕЛЯ");
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  // приоритет пользователи по городу сделать!
+  const userId = req.userId;
+
+  try {
+    const usersData = await User.findAll({
+      where: { userId: { [Op.ne]: userId } },
+      attributes: ["userId", "firstName", "lastName", "avatar"],
+    });
+    console.log(usersData);
+    res.json(usersData);
+  } catch (error) {
+    res.status(500).json("ОШИБКА ПОЛУЧЕНИЯ Пользователей");
+  }
+};
+
+export const createSubscription = async (req, res) => {
+  const { userId, friendId } = req.params;
+  console.log("userId", userId);
+  console.log("friendId", friendId);
+  try {
+    const isSubscription = await Subscription.findOne({
+      where: {
+        [Op.and]: [{ subscriberId: userId, subscribedToId: friendId }],
+      },
+    });
+
+    if (isSubscription) {
+      return res.status(500).json("Подписка существует");
+    }
+
+    const newSub = await Subscription.create({
+      subscriberId: userId,
+      subscribedToId: friendId,
+    });
+    res.json(newSub);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("ОШИБКА новой подписки");
+  }
+};
+
+export const deleteSubscription = async (req, res) => {
+  const { userId, friendId } = req.params;
+  try {
+    const deletedubscriptionCount = await Subscription.destroy({
+      where: {
+        [Op.and]: [{ subscriberId: userId, subscribedToId: friendId }],
+      },
+    });
+
+    if (deletedubscriptionCount === 0) {
+      return res.status(500).json("Не удалось удалить подписку");
+    }
+
+    res.json({ succsess: true });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("ОШИБКА удаления подписки");
+  }
+};
+
+export const getUserSubscription = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const subscribedUsers = await Subscription.findAll({
+      where: {
+        subscriberId: userId,
+      },
+      include: {
+        model: User,
+        as: "subscribers",
+        attributes: ["firstName", "lastName", "userId", "avatar"],
+      },
+      attributes: [],
+    });
+    const formattedResult = subscribedUsers.map((subscription) =>
+      subscription.subscribers.toJSON()
+    );
+    res.json(formattedResult);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("ОШИБКА получения подписок");
+  }
+};
+
+// const subscribers = await Subscription.findAll({
+//   where: {
+//     subscriberId: userId,
+//   },
+// });

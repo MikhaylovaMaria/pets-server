@@ -31,11 +31,11 @@ const User = sequelize.define("User", {
     values: ["admin", "regular"],
     defaultValue: "regular",
   },
-  cityId: { type: DataTypes.UUID, allowNull: false },
+  cityId: { type: DataTypes.INTEGER, allowNull: true },
 });
 
 const City = sequelize.define("City", {
-  cityId: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  cityId: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   cityName: { type: DataTypes.STRING(50), allowNull: false, unique: true },
   cityCenter: { type: DataTypes.ARRAY(DataTypes.FLOAT) },
 });
@@ -44,15 +44,15 @@ const Article = sequelize.define("Article", {
   articleId: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
   title: { type: DataTypes.STRING(200), allowNull: false },
   description: { type: DataTypes.STRING(8000), allowNull: false },
-  articleStatusId: { type: DataTypes.UUID },
+  articleStatusId: { type: DataTypes.INTEGER },
   photos: { type: DataTypes.ARRAY(DataTypes.STRING) },
 });
 
 const ArticleStatus = sequelize.define("ArticleStatus", {
   articleStatusId: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
     primaryKey: true,
-    defaultValue: UUIDV4,
+    autoIncrement: true,
   },
   articleStatusName: {
     type: DataTypes.STRING(50),
@@ -67,18 +67,19 @@ const Announcement = sequelize.define("Announcement", {
     primaryKey: true,
     defaultValue: UUIDV4,
   },
-  announcementTypeId: { type: DataTypes.UUID },
+  announcementTypeId: { type: DataTypes.INTEGER },
+  announcementTitle: { type: DataTypes.STRING(2000), allowNull: false },
   description: { type: DataTypes.STRING(2000) },
-  announcementLocation: { type: DataTypes.ARRAY(DataTypes.FLOAT) },
+  announcementLocation: { type: DataTypes.GEOMETRY("POINT") },
   photos: { type: DataTypes.ARRAY(DataTypes.STRING) },
-  announcementStatusId: { type: DataTypes.UUID },
+  announcementStatusId: { type: DataTypes.INTEGER },
 });
 
 const AnnouncementType = sequelize.define("AnnouncementType", {
   announcementTypeId: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
     primaryKey: true,
-    defaultValue: UUIDV4,
+    autoIncrement: true,
   },
   announcementTypeName: {
     type: DataTypes.STRING(50),
@@ -89,9 +90,9 @@ const AnnouncementType = sequelize.define("AnnouncementType", {
 
 const AnnouncementStatus = sequelize.define("AnnouncementStatus", {
   announcementStatusId: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
     primaryKey: true,
-    defaultValue: UUIDV4,
+    autoIncrement: true,
   },
   announcementStatusName: {
     type: DataTypes.STRING(50),
@@ -101,7 +102,11 @@ const AnnouncementStatus = sequelize.define("AnnouncementStatus", {
 });
 
 // const Subscription = sequelize.define("Subscription", {
-//   subscriptionId: { type: DataTypes.UUID, primaryKey: true },
+//   subscriptionId: {
+//     type: DataTypes.UUID,
+//     primaryKey: true,
+//     defaultValue: UUIDV4,
+//   },
 //   subscriberId: {
 //     type: DataTypes.UUID,
 //     allowNull: false,
@@ -119,6 +124,22 @@ const AnnouncementStatus = sequelize.define("AnnouncementStatus", {
 //     },
 //   },
 // });
+
+const Subscription = sequelize.define("Subscription", {
+  subscriptionId: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    defaultValue: DataTypes.UUIDV4,
+  },
+  subscriberId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+  },
+  subscribedToId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+  },
+});
 
 // // const MessageStatus = sequelize.define("RMessageStatus", {
 // //   messageStatusId: { type: DataTypes.UUID, primaryKey: true },
@@ -197,18 +218,30 @@ Article.belongsTo(User, { foreignKey: "userId" });
 User.hasMany(Announcement, { foreignKey: "userId" });
 Announcement.belongsTo(User, { foreignKey: "userId" });
 
-// // // Пользователь - подписка:
-// // User.belongsToMany(User, {
-// //   through: Subscription,
-// //   as: "subscribers", // пользователи, которые подписаны на этого пользователя
-// //   foreignKey: "subscribedToId",
-// // });
+// // Пользователь - подписка:
+// User.belongsToMany(User, {
+//   through: Subscription,
+//   as: "subscribers", // пользователи, которые подписаны на этого пользователя
+//   foreignKey: "subscribedToId",
+// });
 
-// // User.belongsToMany(User, {
-// //   through: Subscription,
-// //   as: "subscriptions", // пользователи, на которых подписан этот пользователь
-// //   foreignKey: "subscriberId",
-// // });
+// User.belongsToMany(User, {
+//   through: Subscription,
+//   as: "subscriptions", // пользователи, на которых подписан этот пользователь
+//   foreignKey: "subscriberId",
+// });
+
+User.hasMany(Subscription, { foreignKey: "subscriberId", as: "subscriptions" });
+User.hasMany(Subscription, { foreignKey: "subscribedToId", as: "subscribers" });
+
+Subscription.belongsTo(User, {
+  foreignKey: "subscriberId",
+  as: "subscriptions",
+});
+Subscription.belongsTo(User, {
+  foreignKey: "subscribedToId",
+  as: "subscribers",
+});
 
 // // //Сообщение - статус сообщения (один статус принадлежит многим сообщениям)
 // // MessageStatus.hasMany(Message, {
@@ -249,5 +282,5 @@ export default {
   // MessageStatus,
   ChatParticipant,
   Chat,
-  // Subscription,
+  Subscription,
 };

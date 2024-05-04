@@ -1,17 +1,31 @@
+import { QueryTypes } from "sequelize";
+import sequelize from "../../db.js";
 import models from "../models/models.js";
 const { Announcement } = models;
+
+const formatToPointType = (coords) => {
+  const point = {
+    type: "Point",
+    coordinates: [Number(coords[1]), Number(coords[0])],
+  };
+  return point;
+};
 
 export const create = async (req, res) => {
   try {
     const announcement = await Announcement.create({
       announcementTypeId: req.body?.announcementTypeId,
+      announcementTitle: req.body.announcementTitle,
       description: req.body.description,
-      announcementLocation: req.body.announcementLocation,
+      announcementLocation: formatToPointType(req.body.announcementLocation),
       photos: req.body?.photos,
       announcementStatusId: req.body?.announcementStatusId,
       userId: req.userId,
     });
-    res.json(announcement);
+    res.json({
+      ...announcement.dataValues,
+      announcementLocation: req.body.announcementLocation,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -21,11 +35,50 @@ export const create = async (req, res) => {
 };
 
 export const getAllByCity = async (req, res) => {
+  let { userId, southWest, northEast } = req.query;
+
+  let announcements;
   try {
-    // Добавить проверку по полигонам!!!
-    const announcements = await Announcement.findAll();
-    res.json(announcements);
+    if (userId) {
+      announcements = await Announcement.findAll({ where: { userId: userId } });
+    }
+
+    if (southWest && northEast) {
+      const cuurentSouthWest = formatToPointType(southWest);
+      const currentNorthEast = formatToPointType(northEast);
+      console.log("cuurentSouthWest", cuurentSouthWest);
+      console.log("currentNorthEast", currentNorthEast);
+
+      const sql = `
+      SELECT * FROM "Announcements"
+      WHERE ST_Contains(
+        ST_MakeEnvelope(:minLon, :minLat, :maxLon, :maxLat, 4326),
+        "announcementLocation"
+      );
+    `;
+      announcements = await sequelize.query(sql, {
+        replacements: {
+          minLon: cuurentSouthWest.coordinates[0],
+          minLat: cuurentSouthWest.coordinates[1],
+          maxLon: currentNorthEast.coordinates[0],
+          maxLat: currentNorthEast.coordinates[1],
+        },
+        type: QueryTypes.SELECT,
+      });
+    }
+    const modifiedAnnouncements = announcements.map((announcement) => {
+      const location = announcement.announcementLocation; // Получаем объект location
+      const latitude = location.coordinates[1]; // Широта
+      const longitude = location.coordinates[0]; // Долгота
+      return {
+        ...announcement,
+        announcementLocation: [latitude, longitude], // Заменяем location на массив [широта, долгота]
+      };
+    });
+
+    res.json(modifiedAnnouncements);
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "Не удалось получить объявления",
     });
