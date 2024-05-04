@@ -2,13 +2,8 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import sequelize from "./db.js";
-import { registerValid, loginValid } from "./src/validations/valids.js";
 import checkAuth from "./src/utils/checkAuth.js";
 
-import {
-  userController,
-  defaultValueController,
-} from "./src/controllers/index.js";
 import {
   initializeStatusesArticle,
   initializeStatusesAnnouncement,
@@ -21,6 +16,8 @@ import AnnouncementRoter from "./src/routes/AnnouncementRouter.js";
 import ChatRouter from "./src/routes/ChatRouter.js";
 import MessageRouter from "./src/routes/MessageRouter.js";
 import AuthRouter from "./src/routes/AuthRouter.js";
+import UserRouter from "./src/routes/UserRouter.js";
+import DefaultValuesRouter from "./src/routes/DefaultValuesRouter.js";
 
 dotenv.config();
 
@@ -32,26 +29,11 @@ app.use(express.json());
 
 app.use("/articles", checkAuth, ArticleRoter);
 app.use("/announcement", checkAuth, AnnouncementRoter);
-app.use("/chat", ChatRouter);
-app.use("/message", MessageRouter);
+app.use("/chat", checkAuth, ChatRouter);
+app.use("/message", checkAuth, MessageRouter);
 app.use("/auth", AuthRouter);
-
-// Переделать на роуты
-// app.get("/auth/me/:id?", checkAuth, userController.getMe);
-// app.post("/login", loginValid, userController.login);
-// app.post("/register", registerValid, userController.register);
-
-app.get("/users/:id", userController.getUser);
-app.get("/users", checkAuth, userController.getAllUsers);
-app.post("/users/:userId/friends/:friendId", userController.createSubscription);
-app.delete(
-  "/users/:userId/friends/:friendId",
-  userController.deleteSubscription
-);
-app.get("/users/:userId/friends", userController.getUserSubscription);
-
-app.get("/cities", defaultValueController.getAllCities);
-app.get("/types", defaultValueController.getTypes);
+app.use("/users", checkAuth, UserRouter);
+app.use("/", DefaultValuesRouter);
 
 const start = async () => {
   try {
@@ -89,3 +71,20 @@ start();
 // app.get("/announcement/:id", checkAuth, announcementController.getOne);
 // app.delete("/announcement/:id", checkAuth, announcementController.remove);
 // app.patch("/announcement/:id", checkAuth, announcementController.update);
+
+// Переделать на роуты
+// app.get("/auth/me/:id?", checkAuth, userController.getMe);
+// app.post("/login", loginValid, userController.login);
+// app.post("/register", registerValid, userController.register);
+
+// app.get("/users/:id", userController.getUser);
+// app.get("/users", checkAuth, userController.getAllUsers);
+// app.post("/users/:userId/friends/:friendId", userController.createSubscription);
+// app.delete(
+//   "/users/:userId/friends/:friendId",
+//   userController.deleteSubscription
+// );
+// app.get("/users/:userId/friends", userController.getUserSubscription);
+
+// app.get("/cities", defaultValueController.getAllCities);
+// app.get("/types", defaultValueController.getTypes);
