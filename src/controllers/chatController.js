@@ -53,6 +53,7 @@ export const create = async (req, res) => {
 export const userChats = async (req, res) => {
   // потом не забыть проверить совпадает ли userId из токена и в req.params
   const userId = req.params.userId;
+
   try {
     const chatParticipants = await ChatParticipant.findAll({
       where: { userId: userId },
@@ -66,6 +67,8 @@ export const userChats = async (req, res) => {
         attributes: ["userId"], // Получить только userId
       },
     });
+
+    console.log("aaa", userChats);
 
     res.json(userChats);
   } catch (error) {

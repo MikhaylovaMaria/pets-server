@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
 import models from "../models/models.js";
-const { User, Subscription } = models;
+const { User, RelationShip} = models;
 import { Op } from "sequelize";
 dotenv.config();
 import dotenv from "dotenv";
@@ -153,9 +153,9 @@ export const createSubscription = async (req, res) => {
   console.log("userId", userId);
   console.log("friendId", friendId);
   try {
-    const isSubscription = await Subscription.findOne({
+    const isSubscription = await RelationShip.findOne({
       where: {
-        [Op.and]: [{ subscriberId: userId, subscribedToId: friendId }],
+        [Op.and]: [{authorId: userId, destinationId: friendId }],
       },
     });
 
@@ -163,9 +163,9 @@ export const createSubscription = async (req, res) => {
       return res.status(500).json("Подписка существует");
     }
 
-    const newSub = await Subscription.create({
-      subscriberId: userId,
-      subscribedToId: friendId,
+    const newSub = await RelationShip.create({
+      authorId: userId,
+      destinationId: friendId,
     });
     res.json(newSub);
   } catch (error) {
@@ -177,9 +177,9 @@ export const createSubscription = async (req, res) => {
 export const deleteSubscription = async (req, res) => {
   const { userId, friendId } = req.params;
   try {
-    const deletedubscriptionCount = await Subscription.destroy({
+    const deletedubscriptionCount = await RelationShip.destroy({
       where: {
-        [Op.and]: [{ subscriberId: userId, subscribedToId: friendId }],
+        [Op.and]: [{ authorId: userId, destinationId: friendId }],
       },
     });
 
@@ -198,9 +198,9 @@ export const getUserSubscription = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const subscribedUsers = await Subscription.findAll({
+    const subscribedUsers = await RelationShip.findAll({
       where: {
-        subscriberId: userId,
+        authorId: userId,
       },
       include: {
         model: User,
@@ -219,7 +219,7 @@ export const getUserSubscription = async (req, res) => {
   }
 };
 
-// const subscribers = await Subscription.findAll({
+// const subscribers = await RelationShip.findAll({
 //   where: {
 //     subscriberId: userId,
 //   },

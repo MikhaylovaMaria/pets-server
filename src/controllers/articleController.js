@@ -34,7 +34,7 @@ export const getAll = async (req, res) => {
             attributes: ["userId", "firstName", "lastName"],
           },
         ],
-        order: [["createdAt", "ASC"]],
+        order: [["createdAt", "DESC"]],
       });
     }
     res.json(articles);

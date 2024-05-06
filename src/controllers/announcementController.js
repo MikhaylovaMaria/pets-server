@@ -41,6 +41,8 @@ export const getAllByCity = async (req, res) => {
   try {
     if (userId) {
       announcements = await Announcement.findAll({ where: { userId: userId } });
+    } else {
+      announcements = await Announcement.findAll();
     }
 
     if (southWest && northEast) {

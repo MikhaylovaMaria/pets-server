@@ -125,19 +125,24 @@ const AnnouncementStatus = sequelize.define("AnnouncementStatus", {
 //   },
 // });
 
-const Subscription = sequelize.define("Subscription", {
-  subscriptionId: {
+const RelationShip = sequelize.define("RelationShip", {
+  RelationShipId: {
     type: DataTypes.UUID,
     primaryKey: true,
     defaultValue: DataTypes.UUIDV4,
   },
-  subscriberId: {
+  authorId: {
     type: DataTypes.UUID,
     allowNull: false,
   },
-  subscribedToId: {
+  destinationId: {
     type: DataTypes.UUID,
     allowNull: false,
+  },
+  typeShip: {
+    type: DataTypes.ENUM,
+    values: ["subscription", "friend", "blocked"],
+    defaultValue: "subscription",
   },
 });
 
@@ -194,25 +199,25 @@ const Message = sequelize.define("Message", {
 City.hasMany(User, { foreignKey: "cityId" });
 User.belongsTo(City, { foreignKey: "cityId" });
 
-// // // Статус статьи- статья (один статус принадлежит многим статьям)
-// // ArticleStatus.hasMany(Article, { foreignKey: "articleStatusId" });
-// // Article.belongsTo(ArticleStatus);
+// Статус статьи- статья (один статус принадлежит многим статьям)
+ArticleStatus.hasMany(Article, { foreignKey: "articleStatusId" });
+Article.belongsTo(ArticleStatus);
 
 // Пользователь - статьи (один пользователь может иметь много статей)
 User.hasMany(Article, { foreignKey: "userId" });
 Article.belongsTo(User, { foreignKey: "userId" });
 
-// // //Статус объявления - объявление (один статус принадлежит многим объявлениям)
-// // AnnouncementStatus.hasMany(Announcement, {
-// //   foreignKey: "announcementStatusId",
-// // });
-// // Announcement.belongsTo(AnnouncementStatus);
+// //Статус объявления - объявление (один статус принадлежит многим объявлениям)
+AnnouncementStatus.hasMany(Announcement, {
+  foreignKey: "announcementStatusId",
+});
+Announcement.belongsTo(AnnouncementStatus);
 
 // // //Тип объявления - объявление (один тип принадлежит многим объявлениям)
-// // AnnouncementType.hasMany(Announcement, {
-// //   foreignKey: "announcementTypeId",
-// // });
-// // Announcement.belongsTo(AnnouncementType);
+AnnouncementType.hasMany(Announcement, {
+  foreignKey: "announcementTypeId",
+});
+Announcement.belongsTo(AnnouncementType);
 
 //Пользователь - объявление (один пользователь может иметь много объявлений)
 User.hasMany(Announcement, { foreignKey: "userId" });
@@ -231,15 +236,15 @@ Announcement.belongsTo(User, { foreignKey: "userId" });
 //   foreignKey: "subscriberId",
 // });
 
-User.hasMany(Subscription, { foreignKey: "subscriberId", as: "subscriptions" });
-User.hasMany(Subscription, { foreignKey: "subscribedToId", as: "subscribers" });
+User.hasMany(RelationShip, { foreignKey: "authorId", as: "subscriptions" });
+User.hasMany(RelationShip, { foreignKey: "destinationId", as: "subscribers" });
 
-Subscription.belongsTo(User, {
-  foreignKey: "subscriberId",
+RelationShip.belongsTo(User, {
+  foreignKey: "authorId",
   as: "subscriptions",
 });
-Subscription.belongsTo(User, {
-  foreignKey: "subscribedToId",
+RelationShip.belongsTo(User, {
+  foreignKey: "destinationId",
   as: "subscribers",
 });
 
@@ -279,8 +284,7 @@ export default {
   AnnouncementStatus,
   Announcement,
   Message,
-  // MessageStatus,
   ChatParticipant,
   Chat,
-  Subscription,
+  RelationShip,
 };
