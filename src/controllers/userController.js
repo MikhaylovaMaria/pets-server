@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
 import models from "../models/models.js";
-const { User, RelationShip} = models;
+const { User, RelationShip } = models;
 import { Op } from "sequelize";
 dotenv.config();
 import dotenv from "dotenv";
@@ -155,14 +155,13 @@ export const createSubscription = async (req, res) => {
   try {
     const isSubscription = await RelationShip.findOne({
       where: {
-        [Op.and]: [{authorId: userId, destinationId: friendId }],
+        [Op.and]: [{ authorId: userId, destinationId: friendId }],
       },
     });
 
     if (isSubscription) {
       return res.status(500).json("Подписка существует");
     }
-
     const newSub = await RelationShip.create({
       authorId: userId,
       destinationId: friendId,
@@ -212,6 +211,7 @@ export const getUserSubscription = async (req, res) => {
     const formattedResult = subscribedUsers.map((subscription) =>
       subscription.subscribers.toJSON()
     );
+    console.log("a", formattedResult);
     res.json(formattedResult);
   } catch (error) {
     console.log(error);
