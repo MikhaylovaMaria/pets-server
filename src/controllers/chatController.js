@@ -10,7 +10,7 @@ export const create = async (req, res) => {
     const authorId = req.body.authorId;
     const partnerId = req.body.partnerId;
     if (req.body.chatType === "private") {
-      const anotherChat = await ChatParticipant.findAll({
+      const anotherChat = await ChatParticipant.findOne({
         where: {
           userId: { [Op.in]: [authorId, partnerId] },
         },
@@ -22,8 +22,10 @@ export const create = async (req, res) => {
           2
         ),
       });
-      if (anotherChat.length > 0) {
-        res.json(anotherChat);
+      if (anotherChat) {
+        const chat = await Chat.findByPk(anotherChat.dataValues.chatId);
+
+        res.json(chat);
       } else {
         const newChat = await Chat.create({
           chatName: req.body.chatName,

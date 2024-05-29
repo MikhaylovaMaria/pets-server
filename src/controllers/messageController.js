@@ -1,3 +1,4 @@
+import { where } from "sequelize";
 import models from "../models/models.js";
 const { Message } = models;
 
@@ -19,7 +20,9 @@ export const addMessage = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const { chatId } = req.params;
-    const result = await Message.findAll({ chatId: chatId });
+    console.log("CHATID", chatId);
+    const result = await Message.findAll({ where: { chatId: chatId } });
+
     res.json(result);
   } catch (error) {
     res.status(500).json({

@@ -166,7 +166,7 @@ export const createSubscription = async (req, res) => {
       authorId: userId,
       destinationId: friendId,
     });
-    res.json(newSub);
+    res.json();
   } catch (error) {
     console.log(error);
     res.status(500).json("ОШИБКА новой подписки");
