@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import sequelize from "./db.js";
 import checkAuth from "./src/utils/checkAuth.js";
+import { exec } from "child_process";
 
 import {
   initializeStatusesArticle,
@@ -35,6 +36,21 @@ app.use("/auth", AuthRouter);
 app.use("/users", checkAuth, UserRouter);
 app.use("/", DefaultValuesRouter);
 
+function initializeDatabase() {
+  exec("./init_db.sh", (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Ошибка при выполнении init_db.sh: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Ошибка: ${stderr}`);
+      return;
+    }
+    console.log(`Вывод: ${stdout}`);
+  });
+}
+
+initializeDatabase();
 const start = async () => {
   try {
     await sequelize.authenticate();
